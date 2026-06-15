@@ -3,8 +3,17 @@ import { useEffect, useRef, useState } from 'react';
 export default function GoogleSignIn({ onSuccess, onError, isLoading, className = 'w-full h-12 text-sm font-medium mb-6' }) {
   const containerRef = useRef(null);
   const initializedRef = useRef(false);
+  const onSuccessRef = useRef(onSuccess);
+  const onErrorRef = useRef(onError);
+  const isLoadingRef = useRef(isLoading);
   const [loadingGoogle, setLoadingGoogle] = useState(true);
   const googleClientId = import.meta.env.VITE_GOOGLE_CLIENT_ID;
+
+  useEffect(() => {
+    onSuccessRef.current = onSuccess;
+    onErrorRef.current = onError;
+    isLoadingRef.current = isLoading;
+  }, [onSuccess, onError, isLoading]);
 
   useEffect(() => {
     if (!googleClientId || googleClientId === 'YOUR_GOOGLE_CLIENT_ID_HERE') {
@@ -19,8 +28,7 @@ export default function GoogleSignIn({ onSuccess, onError, isLoading, className 
 
     const renderButton = () => {
       if (!containerRef.current || !window.google?.accounts?.id) return false;
-
-      const width = Math.max(Math.floor(containerRef.current.getBoundingClientRect().width || 320), 280);
+      if (containerRef.current.querySelector('iframe')) return true;
 
       try {
         if (!initializedRef.current) {
@@ -28,17 +36,18 @@ export default function GoogleSignIn({ onSuccess, onError, isLoading, className 
             client_id: googleClientId,
             callback: async (response) => {
               try {
-                if (isLoading) return;
-                await onSuccess(response.credential);
+                if (isLoadingRef.current) return;
+                await onSuccessRef.current(response.credential);
               } catch (err) {
                 console.error('Google Sign-In error:', err);
-                onError?.(err.message || 'Google Sign-In failed');
+                onErrorRef.current?.(err.message || 'Google Sign-In failed');
               }
             },
           });
           initializedRef.current = true;
         }
 
+        const width = Math.max(containerRef.current.getBoundingClientRect().width || 320, 280);
         containerRef.current.innerHTML = '';
         window.google.accounts.id.renderButton(containerRef.current, {
           theme: 'outline',
@@ -56,19 +65,11 @@ export default function GoogleSignIn({ onSuccess, onError, isLoading, className 
       }
     };
 
-    if (renderButton()) {
-      return () => {
-        cancelled = true;
-        clearInterval(checkGoogleLib);
-        clearTimeout(timeout);
-      };
-    }
-
     checkGoogleLib = setInterval(() => {
       if (renderButton()) {
         clearInterval(checkGoogleLib);
       }
-    }, 150);
+    }, 200);
 
     timeout = setTimeout(() => {
       clearInterval(checkGoogleLib);
@@ -80,7 +81,7 @@ export default function GoogleSignIn({ onSuccess, onError, isLoading, className 
       clearInterval(checkGoogleLib);
       clearTimeout(timeout);
     };
-  }, [googleClientId, isLoading, onError, onSuccess]);
+  }, [googleClientId]);
 
   return (
     <>
