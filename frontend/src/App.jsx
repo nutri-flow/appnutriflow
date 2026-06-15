@@ -23,9 +23,9 @@ import Login from './pages/Login';
 import Register from './pages/Register';
 
 const AuthenticatedApp = () => {
-  const { isLoadingAuth, isLoadingPublicSettings, authError, isAuthenticated } = useAuth();
+  const { isLoadingAuth, authError, isAuthenticated } = useAuth();
 
-  if (isLoadingPublicSettings || isLoadingAuth) {
+  if (isLoadingAuth) {
     return (
       <div className="fixed inset-0 flex items-center justify-center">
         <div className="w-8 h-8 border-4 border-slate-200 border-t-emerald-600 rounded-full animate-spin"></div>
@@ -72,17 +72,17 @@ const AuthenticatedApp = () => {
 };
 
 function App() {
-  const { isLoadingAuth } = useAuth();
-
-  if (isLoadingAuth) {
-    return (
-      <div className="fixed inset-0 flex items-center justify-center">
-        <div className="w-8 h-8 border-4 border-slate-200 border-t-emerald-600 rounded-full animate-spin"></div>
-      </div>
-    );
-  }
-
-  return <AuthenticatedApp />;
+  return (
+    <AuthProvider>
+      <QueryClientProvider client={queryClientInstance}>
+        <Router>
+          <ScrollToTop />
+          <AuthenticatedApp />
+        </Router>
+        <Toaster />
+      </QueryClientProvider>
+    </AuthProvider>
+  )
 }
 
 export default App
