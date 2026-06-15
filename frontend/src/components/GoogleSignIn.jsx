@@ -48,9 +48,17 @@ export default function GoogleSignIn({ onSuccess, onError, isLoading, className 
         }
 
         const width = Math.max(containerRef.current.getBoundingClientRect().width || 320, 280);
-        while (containerRef.current.firstChild) {
-          containerRef.current.removeChild(containerRef.current.firstChild);
+        
+        // Use replaceChildren for safer DOM updates
+        try {
+          containerRef.current.replaceChildren();
+        } catch (e) {
+          // Fallback for older browsers
+          while (containerRef.current.firstChild) {
+            containerRef.current.removeChild(containerRef.current.firstChild);
+          }
         }
+        
         window.google.accounts.id.renderButton(containerRef.current, {
           theme: 'outline',
           size: 'large',
@@ -82,6 +90,7 @@ export default function GoogleSignIn({ onSuccess, onError, isLoading, className 
       cancelled = true;
       clearInterval(checkGoogleLib);
       clearTimeout(timeout);
+      // Don't try to unmount Google button, let Google library handle it
     };
   }, [googleClientId]);
 
