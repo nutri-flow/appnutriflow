@@ -33,8 +33,6 @@ const AuthenticatedApp = () => {
     );
   }
 
-  // Do not auto-redirect to login on root load. Keep the user on the current URL
-  // until they explicitly choose to sign in.
   if (!isAuthenticated) {
     return (
       <Routes>
@@ -73,8 +71,8 @@ const AuthenticatedApp = () => {
   );
 };
 
-function AppRoutes() {
-  const { isLoadingAuth, isAuthenticated } = useAuth();
+function App() {
+  const { isLoadingAuth } = useAuth();
 
   if (isLoadingAuth) {
     return (
@@ -84,28 +82,7 @@ function AppRoutes() {
     );
   }
 
-  return (
-    <Routes>
-      <Route path="/login" element={<Login />} />
-      <Route path="/register" element={<Register />} />
-      <Route path="/" element={<AuthenticatedApp />} />
-      <Route path="*" element={<AuthenticatedApp />} />
-    </Routes>
-  );
-}
-
-function App() {
-  return (
-    <AuthProvider>
-      <QueryClientProvider client={queryClientInstance}>
-        <Router>
-          <ScrollToTop />
-          <AppRoutes />
-        </Router>
-        <Toaster />
-      </QueryClientProvider>
-    </AuthProvider>
-  )
+  return <AuthenticatedApp />;
 }
 
 export default App
