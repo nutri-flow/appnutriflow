@@ -133,6 +133,7 @@ export default function Register() {
         onSuccess={handleGoogleSuccess}
         onError={handleGoogleError}
         isLoading={loading}
+        style={{ display: 'none' }}
       />
 
       <div className="relative mb-6">

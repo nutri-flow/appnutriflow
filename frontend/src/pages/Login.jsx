@@ -62,6 +62,7 @@ export default function Login() {
         onSuccess={handleGoogleSuccess}
         onError={handleGoogleError}
         isLoading={loading}
+        style={{ display: 'none' }}
       />
 
       <div className="relative mb-6">
