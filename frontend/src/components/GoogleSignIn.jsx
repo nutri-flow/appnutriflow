@@ -2,6 +2,7 @@ import { useEffect, useRef, useState } from 'react';
 
 export default function GoogleSignIn({ onSuccess, onError, isLoading, className = 'w-full h-12 text-sm font-medium mb-6' }) {
   const containerRef = useRef(null);
+  const buttonRef = useRef(null);
   const initializedRef = useRef(false);
   const onSuccessRef = useRef(onSuccess);
   const onErrorRef = useRef(onError);
@@ -27,8 +28,10 @@ export default function GoogleSignIn({ onSuccess, onError, isLoading, className 
     let cancelled = false;
 
     const renderButton = () => {
-      if (!containerRef.current || !window.google?.accounts?.id) return false;
-      if (containerRef.current.querySelector('iframe')) return true;
+      if (!containerRef.current || !window.google?.accounts?.id || !buttonRef.current) return false;
+      
+      // Check if button already rendered by Google (iframe present)
+      if (buttonRef.current.querySelector('iframe')) return true;
 
       try {
         if (!initializedRef.current) {
@@ -49,17 +52,8 @@ export default function GoogleSignIn({ onSuccess, onError, isLoading, className 
 
         const width = Math.max(containerRef.current.getBoundingClientRect().width || 320, 280);
         
-        // Use replaceChildren for safer DOM updates
-        try {
-          containerRef.current.replaceChildren();
-        } catch (e) {
-          // Fallback for older browsers
-          while (containerRef.current.firstChild) {
-            containerRef.current.removeChild(containerRef.current.firstChild);
-          }
-        }
-        
-        window.google.accounts.id.renderButton(containerRef.current, {
+        // Render into the specific button div without clearing parent
+        window.google.accounts.id.renderButton(buttonRef.current, {
           theme: 'outline',
           size: 'large',
           width: String(Math.min(width, 400)),
@@ -90,7 +84,6 @@ export default function GoogleSignIn({ onSuccess, onError, isLoading, className 
       cancelled = true;
       clearInterval(checkGoogleLib);
       clearTimeout(timeout);
-      // Don't try to unmount Google button, let Google library handle it
     };
   }, [googleClientId]);
 
@@ -111,9 +104,11 @@ export default function GoogleSignIn({ onSuccess, onError, isLoading, className 
           }} 
           className={className}
         >
-          {loadingGoogle && (
-            <span className="text-sm text-muted-foreground">Carregando Google Sign-In...</span>
-          )}
+          <div ref={buttonRef}>
+            {loadingGoogle && (
+              <span className="text-sm text-muted-foreground">Carregando Google Sign-In...</span>
+            )}
+          </div>
         </div>
       )}
     </>
