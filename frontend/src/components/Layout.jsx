@@ -5,7 +5,7 @@ import {
   UtensilsCrossed, BookOpen, FileText, TrendingUp,
   DollarSign, Calendar, Settings, Menu, X, Leaf
 } from 'lucide-react';
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 
 const navItems = [
   { label: 'Dashboard', path: '/', icon: LayoutDashboard },
@@ -23,6 +23,14 @@ const navItems = [
 export default function Layout() {
   const { pathname } = useLocation();
   const [open, setOpen] = useState(false);
+  const [tenantId, setTenantId] = useState(() => Number(localStorage.getItem('nutriflow_tenant_id') || 1));
+
+  useEffect(() => {
+    const safeTenantId = Number.isFinite(tenantId) && tenantId > 0 ? tenantId : 1;
+    localStorage.setItem('nutriflow_tenant_id', String(safeTenantId));
+    localStorage.setItem('nutriflow_organization_id', String(safeTenantId));
+    setTenantId(safeTenantId);
+  }, [tenantId]);
 
   const Sidebar = ({ mobile = false }) => (
     <aside className={cn(
@@ -61,7 +69,15 @@ export default function Layout() {
       </nav>
 
       {/* Footer */}
-      <div className="px-3 py-3 border-t border-border">
+      <div className="px-3 py-3 border-t border-border space-y-3">
+        <label className="block text-xs font-semibold uppercase tracking-wide text-slate-500">Tenant</label>
+        <input
+          type="number"
+          min="1"
+          value={tenantId}
+          onChange={(event) => setTenantId(Number(event.target.value) || 1)}
+          className="w-full rounded-xl border border-slate-200 bg-slate-50 px-3 py-2 text-sm text-slate-900 shadow-sm outline-none ring-0 transition focus:border-emerald-500 focus:bg-white"
+        />
         <Link
           to="/configuracoes"
           onClick={() => setOpen(false)}
@@ -101,12 +117,19 @@ export default function Layout() {
           <button onClick={() => setOpen(true)} className="p-1.5 rounded-lg hover:bg-slate-100">
             <Menu className="w-5 h-5 text-slate-600" />
           </button>
-          <div className="flex items-center gap-2">
+          <div className="flex items-center gap-2 flex-1">
             <div className="w-6 h-6 bg-emerald-600 rounded-lg flex items-center justify-center">
               <Leaf className="w-3 h-3 text-white" />
             </div>
             <span className="font-bold text-slate-900 font-display">NutriFlow</span>
           </div>
+          <input
+            type="number"
+            min="1"
+            value={tenantId}
+            onChange={(event) => setTenantId(Number(event.target.value) || 1)}
+            className="w-20 rounded-lg border border-slate-200 bg-slate-50 px-2 py-1.5 text-xs text-slate-900 shadow-sm outline-none transition focus:border-emerald-500 focus:bg-white"
+          />
         </header>
 
         {/* Page content */}
