@@ -129,11 +129,12 @@ export default function Register() {
         </>
       }
     >
-      <GoogleSignIn 
+      {/* GoogleSignIn temporarily disabled for debugging */}
+      {false && <GoogleSignIn 
         onSuccess={handleGoogleSuccess}
         onError={handleGoogleError}
         isLoading={loading}
-      />
+      />}
 
       <div className="relative mb-6">
         <div className="absolute inset-0 flex items-center">
