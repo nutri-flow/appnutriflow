@@ -1,5 +1,20 @@
 const API_BASE = import.meta.env.VITE_API_BASE_URL || 'http://localhost:4000';
 
+function getTenantId() {
+  const stored = localStorage.getItem('nutriflow_tenant_id') || localStorage.getItem('nutriflow_organization_id');
+  const parsed = Number(stored ?? 1);
+  return Number.isFinite(parsed) && parsed > 0 ? parsed : 1;
+}
+
+function getRequestHeaders(extra = {}) {
+  return {
+    'Content-Type': 'application/json',
+    'x-tenant-id': String(getTenantId()),
+    'x-organization-id': String(getTenantId()),
+    ...(extra.headers || {}),
+  };
+}
+
 const entityMap = {
   Patient: 'patients',
   Consultation: 'consultations',
@@ -14,10 +29,7 @@ const entityMap = {
 
 async function request(path, options = {}) {
   const response = await fetch(`${API_BASE}${path}`, {
-    headers: {
-      'Content-Type': 'application/json',
-      ...(options.headers || {}),
-    },
+    headers: getRequestHeaders(options),
     ...options,
   });
 
@@ -52,17 +64,25 @@ export const customDb = {
     isAuthenticated: async () => true,
     me: async () => {
       const stored = localStorage.getItem('nutriflow_user');
-      return stored ? JSON.parse(stored) : { id: 1, email: 'demo@nutriflow.local', name: 'Usuário' };
+      const currentUser = stored ? JSON.parse(stored) : { id: 1, email: 'demo@nutriflow.local', name: 'Usuário' };
+      currentUser.organization_id = currentUser.organization_id ?? getTenantId();
+      return currentUser;
     },
     logout: () => localStorage.removeItem('nutriflow_user'),
     redirectToLogin: () => {},
     loginViaEmailPassword: async (email, password) => {
-      localStorage.setItem('nutriflow_user', JSON.stringify({ email, password, id: 1 }));
+      const tenantId = getTenantId();
+      localStorage.setItem('nutriflow_user', JSON.stringify({ email, password, id: 1, organization_id: tenantId }));
+      localStorage.setItem('nutriflow_tenant_id', String(tenantId));
+      localStorage.setItem('nutriflow_organization_id', String(tenantId));
       return { ok: true };
     },
     loginWithProvider: async () => ({ ok: true }),
     register: async (payload) => {
-      localStorage.setItem('nutriflow_user', JSON.stringify({ id: 1, ...payload }));
+      const tenantId = payload.organization_id ?? getTenantId();
+      localStorage.setItem('nutriflow_user', JSON.stringify({ id: 1, ...payload, organization_id: tenantId }));
+      localStorage.setItem('nutriflow_tenant_id', String(tenantId));
+      localStorage.setItem('nutriflow_organization_id', String(tenantId));
       return { ok: true };
     },
     verifyOtp: async (payload) => ({ access_token: 'local-token', ...payload }),

@@ -7,6 +7,7 @@ dotenv.config();
 
 const app = express();
 const port = process.env.PORT || 4000;
+const DEFAULT_TENANT_ID = Number(process.env.DEFAULT_TENANT_ID || 1);
 
 app.use(cors());
 app.use(express.json());
@@ -20,6 +21,7 @@ async function initializeDatabase() {
   await pool.query(`
     CREATE TABLE IF NOT EXISTS patients (
       id SERIAL PRIMARY KEY,
+      organization_id INTEGER DEFAULT 1,
       nome TEXT,
       email TEXT,
       telefone TEXT,
@@ -28,6 +30,7 @@ async function initializeDatabase() {
     );
     CREATE TABLE IF NOT EXISTS consultations (
       id SERIAL PRIMARY KEY,
+      organization_id INTEGER DEFAULT 1,
       paciente_id INTEGER,
       data TIMESTAMP,
       tipo TEXT,
@@ -46,6 +49,7 @@ async function initializeDatabase() {
     );
     CREATE TABLE IF NOT EXISTS diets (
       id SERIAL PRIMARY KEY,
+      organization_id INTEGER DEFAULT 1,
       paciente_id INTEGER,
       nome TEXT,
       descricao TEXT,
@@ -53,6 +57,7 @@ async function initializeDatabase() {
     );
     CREATE TABLE IF NOT EXISTS financial_records (
       id SERIAL PRIMARY KEY,
+      organization_id INTEGER DEFAULT 1,
       paciente_id INTEGER,
       valor NUMERIC,
       tipo TEXT,
@@ -61,6 +66,7 @@ async function initializeDatabase() {
     );
     CREATE TABLE IF NOT EXISTS productions (
       id SERIAL PRIMARY KEY,
+      organization_id INTEGER DEFAULT 1,
       paciente_id INTEGER,
       titulo TEXT,
       conteudo TEXT,
@@ -68,6 +74,7 @@ async function initializeDatabase() {
     );
     CREATE TABLE IF NOT EXISTS materials (
       id SERIAL PRIMARY KEY,
+      organization_id INTEGER DEFAULT 1,
       nome TEXT,
       unidade TEXT,
       estoque NUMERIC,
@@ -75,6 +82,7 @@ async function initializeDatabase() {
     );
     CREATE TABLE IF NOT EXISTS evolutions (
       id SERIAL PRIMARY KEY,
+      organization_id INTEGER DEFAULT 1,
       paciente_id INTEGER,
       data TIMESTAMP,
       observacoes TEXT,
@@ -82,18 +90,25 @@ async function initializeDatabase() {
     );
     CREATE TABLE IF NOT EXISTS templates (
       id SERIAL PRIMARY KEY,
+      organization_id INTEGER DEFAULT 1,
       nome TEXT,
       conteudo TEXT,
       created_at TIMESTAMP DEFAULT NOW()
     );
     CREATE TABLE IF NOT EXISTS organizations (
       id SERIAL PRIMARY KEY,
+      organization_id INTEGER DEFAULT 1,
       nome TEXT,
       email TEXT,
       telefone TEXT,
       created_at TIMESTAMP DEFAULT NOW()
     );
   `);
+
+  const tables = ['patients', 'consultations', 'diets', 'financial_records', 'productions', 'materials', 'evolutions', 'templates', 'organizations'];
+  for (const table of tables) {
+    await pool.query(`ALTER TABLE ${table} ADD COLUMN IF NOT EXISTS organization_id INTEGER DEFAULT ${DEFAULT_TENANT_ID}`);
+  }
 }
 
 const tableMap = {
@@ -123,6 +138,19 @@ function normalizeEntity(entity) {
   return tableMap[String(entity).toLowerCase()] || String(entity).toLowerCase();
 }
 
+function getTenantId(req) {
+  const raw = req.get('x-tenant-id') || req.get('x-organization-id') || req.query.organization_id || req.query.tenant_id;
+  const parsed = Number(raw ?? DEFAULT_TENANT_ID);
+  return Number.isFinite(parsed) && parsed > 0 ? parsed : DEFAULT_TENANT_ID;
+}
+
+function withTenant(payload, tenantId) {
+  return {
+    ...payload,
+    organization_id: payload.organization_id ?? tenantId,
+  };
+}
+
 function buildInsertQuery(table, payload) {
   const fields = Object.keys(payload || {}).filter((k) => payload[k] !== undefined);
   if (!fields.length) return null;
@@ -134,13 +162,13 @@ function buildInsertQuery(table, payload) {
   };
 }
 
-function buildUpdateQuery(table, id, payload) {
-  const fields = Object.keys(payload || {}).filter((k) => payload[k] !== undefined);
+function buildUpdateQuery(table, id, payload, tenantId) {
+  const fields = Object.keys(payload || {}).filter((k) => k !== 'organization_id' && payload[k] !== undefined);
   if (!fields.length) return null;
   const assignments = fields.map((field, i) => `${field} = $${i + 1}`).join(', ');
   return {
-    text: `UPDATE ${table} SET ${assignments} WHERE id = $${fields.length + 1} RETURNING *`,
-    values: [...fields.map((field) => payload[field]), id],
+    text: `UPDATE ${table} SET ${assignments} WHERE id = $${fields.length + 1} AND organization_id = $${fields.length + 2} RETURNING *`,
+    values: [...fields.map((field) => payload[field]), id, tenantId],
   };
 }
 
@@ -156,7 +184,8 @@ app.get('/health', async (_req, res) => {
 app.get('/api/:entity', async (req, res) => {
   try {
     const table = normalizeEntity(req.params.entity);
-    const result = await pool.query(`SELECT * FROM ${table} ORDER BY id DESC`);
+    const tenantId = getTenantId(req);
+    const result = await pool.query(`SELECT * FROM ${table} WHERE organization_id = $1 ORDER BY id DESC`, [tenantId]);
     res.json(result.rows);
   } catch (error) {
     res.status(500).json({ error: error.message });
@@ -166,7 +195,8 @@ app.get('/api/:entity', async (req, res) => {
 app.get('/api/:entity/:id', async (req, res) => {
   try {
     const table = normalizeEntity(req.params.entity);
-    const result = await pool.query(`SELECT * FROM ${table} WHERE id = $1`, [req.params.id]);
+    const tenantId = getTenantId(req);
+    const result = await pool.query(`SELECT * FROM ${table} WHERE id = $1 AND organization_id = $2`, [req.params.id, tenantId]);
     res.json(result.rows[0] || null);
   } catch (error) {
     res.status(500).json({ error: error.message });
@@ -176,7 +206,9 @@ app.get('/api/:entity/:id', async (req, res) => {
 app.post('/api/:entity', async (req, res) => {
   try {
     const table = normalizeEntity(req.params.entity);
-    const query = buildInsertQuery(table, req.body);
+    const tenantId = getTenantId(req);
+    const payload = withTenant(req.body, tenantId);
+    const query = buildInsertQuery(table, payload);
     if (!query) return res.status(400).json({ error: 'No fields provided' });
     const result = await pool.query(query.text, query.values);
     res.status(201).json(result.rows[0]);
@@ -188,7 +220,9 @@ app.post('/api/:entity', async (req, res) => {
 app.put('/api/:entity/:id', async (req, res) => {
   try {
     const table = normalizeEntity(req.params.entity);
-    const query = buildUpdateQuery(table, req.params.id, req.body);
+    const tenantId = getTenantId(req);
+    const payload = withTenant(req.body, tenantId);
+    const query = buildUpdateQuery(table, req.params.id, payload, tenantId);
     if (!query) return res.status(400).json({ error: 'No fields provided' });
     const result = await pool.query(query.text, query.values);
     res.json(result.rows[0] || null);
@@ -200,7 +234,8 @@ app.put('/api/:entity/:id', async (req, res) => {
 app.delete('/api/:entity/:id', async (req, res) => {
   try {
     const table = normalizeEntity(req.params.entity);
-    await pool.query(`DELETE FROM ${table} WHERE id = $1`, [req.params.id]);
+    const tenantId = getTenantId(req);
+    await pool.query(`DELETE FROM ${table} WHERE id = $1 AND organization_id = $2`, [req.params.id, tenantId]);
     res.json({ ok: true, id: req.params.id });
   } catch (error) {
     res.status(500).json({ error: error.message });
