@@ -2,8 +2,8 @@ import { useEffect, useRef, useState } from 'react';
 
 export default function GoogleSignIn({ onSuccess, onError, isLoading, className = 'w-full h-12 text-sm font-medium mb-6' }) {
   const containerRef = useRef(null);
+  const initializedRef = useRef(false);
   const [loadingGoogle, setLoadingGoogle] = useState(true);
-  const [initialized, setInitialized] = useState(false);
   const googleClientId = import.meta.env.VITE_GOOGLE_CLIENT_ID;
 
   useEffect(() => {
@@ -13,60 +13,74 @@ export default function GoogleSignIn({ onSuccess, onError, isLoading, className 
       return;
     }
 
-    // Check if Google library is loaded
-    const checkGoogleLib = setInterval(() => {
-      if (window.google && window.google.accounts && window.google.accounts.id) {
-        clearInterval(checkGoogleLib);
-        
-        try {
+    let checkGoogleLib;
+    let timeout;
+    let cancelled = false;
+
+    const renderButton = () => {
+      if (!containerRef.current || !window.google?.accounts?.id) return false;
+
+      const width = Math.max(Math.floor(containerRef.current.getBoundingClientRect().width || 320), 280);
+
+      try {
+        if (!initializedRef.current) {
           window.google.accounts.id.initialize({
             client_id: googleClientId,
-            callback: handleCredentialResponse,
+            callback: async (response) => {
+              try {
+                if (isLoading) return;
+                await onSuccess(response.credential);
+              } catch (err) {
+                console.error('Google Sign-In error:', err);
+                onError?.(err.message || 'Google Sign-In failed');
+              }
+            },
           });
-
-          // Render the button if container exists
-          if (containerRef.current && !initialized) {
-            window.google.accounts.id.renderButton(containerRef.current, {
-              theme: 'outline',
-              size: 'large',
-              width: '100%',
-              locale: 'pt-BR',
-            });
-            setInitialized(true);
-          }
-          setLoadingGoogle(false);
-        } catch (err) {
-          console.error('Failed to initialize Google Sign-In:', err);
-          setLoadingGoogle(false);
+          initializedRef.current = true;
         }
-      }
-    }, 100);
 
-    // Timeout after 5 seconds
-    const timeout = setTimeout(() => {
+        containerRef.current.innerHTML = '';
+        window.google.accounts.id.renderButton(containerRef.current, {
+          theme: 'outline',
+          size: 'large',
+          width: String(Math.min(width, 400)),
+          locale: 'pt-BR',
+        });
+
+        if (!cancelled) setLoadingGoogle(false);
+        return true;
+      } catch (err) {
+        console.error('Failed to initialize Google Sign-In:', err);
+        if (!cancelled) setLoadingGoogle(false);
+        return false;
+      }
+    };
+
+    if (renderButton()) {
+      return () => {
+        cancelled = true;
+        clearInterval(checkGoogleLib);
+        clearTimeout(timeout);
+      };
+    }
+
+    checkGoogleLib = setInterval(() => {
+      if (renderButton()) {
+        clearInterval(checkGoogleLib);
+      }
+    }, 150);
+
+    timeout = setTimeout(() => {
       clearInterval(checkGoogleLib);
-      setLoadingGoogle(false);
+      if (!cancelled) setLoadingGoogle(false);
     }, 5000);
 
     return () => {
+      cancelled = true;
       clearInterval(checkGoogleLib);
       clearTimeout(timeout);
     };
-  }, [googleClientId, initialized]);
-
-  const handleCredentialResponse = async (response) => {
-    try {
-      if (isLoading) return;
-      
-      const idToken = response.credential;
-      await onSuccess(idToken);
-    } catch (err) {
-      console.error('Google Sign-In error:', err);
-      if (onError) {
-        onError(err.message || 'Google Sign-In failed');
-      }
-    }
-  };
+  }, [googleClientId, isLoading, onError, onSuccess]);
 
   return (
     <>
