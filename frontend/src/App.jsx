@@ -23,7 +23,7 @@ import Login from './pages/Login';
 import Register from './pages/Register';
 
 const AuthenticatedApp = () => {
-  const { isLoadingAuth, isLoadingPublicSettings, authError, isAuthenticated, navigateToLogin } = useAuth();
+  const { isLoadingAuth, isLoadingPublicSettings, authError, isAuthenticated } = useAuth();
 
   if (isLoadingPublicSettings || isLoadingAuth) {
     return (
@@ -33,9 +33,16 @@ const AuthenticatedApp = () => {
     );
   }
 
-  // If not authenticated, show login
+  // Do not auto-redirect to login on root load. Keep the user on the current URL
+  // until they explicitly choose to sign in.
   if (!isAuthenticated) {
-    return <Navigate to="/login" replace />;
+    return (
+      <Routes>
+        <Route path="/login" element={<Login />} />
+        <Route path="/register" element={<Register />} />
+        <Route path="*" element={<Login />} />
+      </Routes>
+    );
   }
 
   if (authError) {
@@ -81,6 +88,7 @@ function AppRoutes() {
     <Routes>
       <Route path="/login" element={<Login />} />
       <Route path="/register" element={<Register />} />
+      <Route path="/" element={<AuthenticatedApp />} />
       <Route path="*" element={<AuthenticatedApp />} />
     </Routes>
   );
