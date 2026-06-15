@@ -1,11 +1,13 @@
-import { Outlet, Link, useLocation } from 'react-router-dom';
+import { Outlet, Link, useLocation, useNavigate } from 'react-router-dom';
 import { cn } from '@/lib/utils';
 import {
   LayoutDashboard, Users, Stethoscope, ClipboardList,
   UtensilsCrossed, BookOpen, FileText, TrendingUp,
-  DollarSign, Calendar, Settings, Menu, X, Leaf
+  DollarSign, Calendar, Settings, Menu, X, Leaf, LogOut
 } from 'lucide-react';
 import { useEffect, useState } from 'react';
+import { useAuth } from '@/lib/AuthContext';
+import db from '@/api/customClient';
 
 const navItems = [
   { label: 'Dashboard', path: '/', icon: LayoutDashboard },
@@ -22,15 +24,14 @@ const navItems = [
 
 export default function Layout() {
   const { pathname } = useLocation();
+  const navigate = useNavigate();
+  const { user } = useAuth();
   const [open, setOpen] = useState(false);
-  const [tenantId, setTenantId] = useState(() => Number(localStorage.getItem('nutriflow_tenant_id') || 1));
 
-  useEffect(() => {
-    const safeTenantId = Number.isFinite(tenantId) && tenantId > 0 ? tenantId : 1;
-    localStorage.setItem('nutriflow_tenant_id', String(safeTenantId));
-    localStorage.setItem('nutriflow_organization_id', String(safeTenantId));
-    setTenantId(safeTenantId);
-  }, [tenantId]);
+  const handleLogout = async () => {
+    await db.auth.logout();
+    navigate('/login');
+  };
 
   const Sidebar = ({ mobile = false }) => (
     <aside className={cn(
@@ -69,15 +70,13 @@ export default function Layout() {
       </nav>
 
       {/* Footer */}
-      <div className="px-3 py-3 border-t border-border space-y-3">
-        <label className="block text-xs font-semibold uppercase tracking-wide text-slate-500">Tenant</label>
-        <input
-          type="number"
-          min="1"
-          value={tenantId}
-          onChange={(event) => setTenantId(Number(event.target.value) || 1)}
-          className="w-full rounded-xl border border-slate-200 bg-slate-50 px-3 py-2 text-sm text-slate-900 shadow-sm outline-none ring-0 transition focus:border-emerald-500 focus:bg-white"
-        />
+      <div className="px-3 py-4 border-t border-border space-y-3">
+        {user && (
+          <div className="px-3 py-2.5 bg-emerald-50 rounded-xl">
+            <p className="text-xs font-semibold text-slate-500 mb-1">Usuário</p>
+            <p className="text-sm font-medium text-emerald-700 truncate">{user.name || user.email}</p>
+          </div>
+        )}
         <Link
           to="/configuracoes"
           onClick={() => setOpen(false)}
@@ -91,6 +90,13 @@ export default function Layout() {
           <Settings className="w-4 h-4 flex-shrink-0 text-slate-400" />
           Configurações
         </Link>
+        <button
+          onClick={handleLogout}
+          className="w-full flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-medium text-red-600 hover:bg-red-50 transition-all"
+        >
+          <LogOut className="w-4 h-4 flex-shrink-0" />
+          Sair
+        </button>
       </div>
     </aside>
   );
@@ -123,13 +129,11 @@ export default function Layout() {
             </div>
             <span className="font-bold text-slate-900 font-display">NutriFlow</span>
           </div>
-          <input
-            type="number"
-            min="1"
-            value={tenantId}
-            onChange={(event) => setTenantId(Number(event.target.value) || 1)}
-            className="w-20 rounded-lg border border-slate-200 bg-slate-50 px-2 py-1.5 text-xs text-slate-900 shadow-sm outline-none transition focus:border-emerald-500 focus:bg-white"
-          />
+          {user && (
+            <div className="text-right">
+              <p className="text-xs text-slate-500 truncate max-w-[120px]">{user.name || user.email}</p>
+            </div>
+          )}
         </header>
 
         {/* Page content */}

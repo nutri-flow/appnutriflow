@@ -19,9 +19,11 @@ import Evolucao from './pages/Evolucao';
 import Financeiro from './pages/Financeiro';
 import Agenda from './pages/Agenda';
 import Configuracoes from './pages/Configuracoes';
+import Login from './pages/Login';
+import Register from './pages/Register';
 
 const AuthenticatedApp = () => {
-  const { isLoadingAuth, isLoadingPublicSettings, authError, navigateToLogin } = useAuth();
+  const { isLoadingAuth, isLoadingPublicSettings, authError, isAuthenticated, navigateToLogin } = useAuth();
 
   if (isLoadingPublicSettings || isLoadingAuth) {
     return (
@@ -31,12 +33,16 @@ const AuthenticatedApp = () => {
     );
   }
 
+  // If not authenticated, show login
+  if (!isAuthenticated) {
+    return <Navigate to="/login" replace />;
+  }
+
   if (authError) {
     if (authError.type === 'user_not_registered') {
       return <UserNotRegisteredError />;
     } else if (authError.type === 'auth_required') {
-      navigateToLogin();
-      return null;
+      return <Navigate to="/login" replace />;
     }
   }
 
@@ -60,13 +66,33 @@ const AuthenticatedApp = () => {
   );
 };
 
+function AppRoutes() {
+  const { isLoadingAuth, isAuthenticated } = useAuth();
+
+  if (isLoadingAuth) {
+    return (
+      <div className="fixed inset-0 flex items-center justify-center">
+        <div className="w-8 h-8 border-4 border-slate-200 border-t-emerald-600 rounded-full animate-spin"></div>
+      </div>
+    );
+  }
+
+  return (
+    <Routes>
+      <Route path="/login" element={<Login />} />
+      <Route path="/register" element={<Register />} />
+      <Route path="*" element={<AuthenticatedApp />} />
+    </Routes>
+  );
+}
+
 function App() {
   return (
     <AuthProvider>
       <QueryClientProvider client={queryClientInstance}>
         <Router>
           <ScrollToTop />
-          <AuthenticatedApp />
+          <AppRoutes />
         </Router>
         <Toaster />
       </QueryClientProvider>
