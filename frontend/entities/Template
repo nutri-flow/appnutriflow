@@ -1,0 +1,55 @@
+{
+  "name": "Template",
+  "type": "object",
+  "properties": {
+    "organization_id": {
+      "type": "string",
+      "description": "ID da organiza\u00e7\u00e3o"
+    },
+    "nome": {
+      "type": "string"
+    },
+    "categoria": {
+      "type": "string",
+      "enum": [
+        "SOP",
+        "Diabetes",
+        "Hipertrofia",
+        "Emagrecimento",
+        "Gesta\u00e7\u00e3o",
+        "Vegetarianismo",
+        "Hipertens\u00e3o",
+        "Performance",
+        "Geral"
+      ]
+    },
+    "conteudo": {
+      "type": "string"
+    },
+    "tags": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      }
+    },
+    "versao": {
+      "type": "number",
+      "default": 1
+    },
+    "favorito": {
+      "type": "boolean",
+      "default": false
+    },
+    "usos": {
+      "type": "number",
+      "default": 0
+    },
+    "descricao": {
+      "type": "string"
+    }
+  },
+  "required": [
+    "nome",
+    "categoria"
+  ]
+}

@@ -1,0 +1,98 @@
+{
+  "name": "Consultation",
+  "type": "object",
+  "properties": {
+    "organization_id": {
+      "type": "string",
+      "description": "ID da organiza\u00e7\u00e3o"
+    },
+    "patient_id": {
+      "type": "string",
+      "description": "ID do paciente"
+    },
+    "data": {
+      "type": "string",
+      "format": "date-time",
+      "description": "Data e hora da consulta"
+    },
+    "tipo": {
+      "type": "string",
+      "enum": [
+        "Primeira Consulta",
+        "Retorno",
+        "Online",
+        "Emerg\u00eancia"
+      ],
+      "default": "Retorno"
+    },
+    "status": {
+      "type": "string",
+      "enum": [
+        "Agendada",
+        "Realizada",
+        "Cancelada",
+        "Remarcada"
+      ],
+      "default": "Agendada"
+    },
+    "peso": {
+      "type": "number"
+    },
+    "altura": {
+      "type": "number"
+    },
+    "imc": {
+      "type": "number"
+    },
+    "circunferencia_abdominal": {
+      "type": "number"
+    },
+    "circunferencia_quadril": {
+      "type": "number"
+    },
+    "circunferencia_braco": {
+      "type": "number"
+    },
+    "percentual_gordura": {
+      "type": "number"
+    },
+    "trabalho": {
+      "type": "string"
+    },
+    "sono": {
+      "type": "string"
+    },
+    "exercicios": {
+      "type": "string"
+    },
+    "preferencias_alimentares": {
+      "type": "string"
+    },
+    "restricoes": {
+      "type": "string"
+    },
+    "intolerancias": {
+      "type": "string"
+    },
+    "patologias": {
+      "type": "string"
+    },
+    "medicamentos": {
+      "type": "string"
+    },
+    "exames": {
+      "type": "string"
+    },
+    "observacoes": {
+      "type": "string"
+    },
+    "valor": {
+      "type": "number",
+      "description": "Valor da consulta"
+    }
+  },
+  "required": [
+    "patient_id",
+    "data"
+  ]
+}

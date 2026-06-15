@@ -1,0 +1,57 @@
+{
+  "name": "FinancialRecord",
+  "type": "object",
+  "properties": {
+    "organization_id": {
+      "type": "string",
+      "description": "ID da organiza\u00e7\u00e3o"
+    },
+    "patient_id": {
+      "type": "string"
+    },
+    "consultation_id": {
+      "type": "string"
+    },
+    "descricao": {
+      "type": "string"
+    },
+    "valor": {
+      "type": "number"
+    },
+    "status": {
+      "type": "string",
+      "enum": [
+        "Pago",
+        "Pendente",
+        "Cancelado"
+      ],
+      "default": "Pendente"
+    },
+    "data_vencimento": {
+      "type": "string",
+      "format": "date"
+    },
+    "data_pagamento": {
+      "type": "string",
+      "format": "date"
+    },
+    "forma_pagamento": {
+      "type": "string",
+      "enum": [
+        "Dinheiro",
+        "PIX",
+        "Cart\u00e3o de Cr\u00e9dito",
+        "Cart\u00e3o de D\u00e9bito",
+        "Transfer\u00eancia",
+        "Outro"
+      ]
+    },
+    "patient_nome": {
+      "type": "string"
+    }
+  },
+  "required": [
+    "patient_id",
+    "valor"
+  ]
+}

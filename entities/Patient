@@ -1,0 +1,84 @@
+{
+  "name": "Patient",
+  "type": "object",
+  "properties": {
+    "organization_id": {
+      "type": "string",
+      "description": "ID da organiza\u00e7\u00e3o"
+    },
+    "nome": {
+      "type": "string",
+      "description": "Nome completo do paciente"
+    },
+    "data_nascimento": {
+      "type": "string",
+      "format": "date",
+      "description": "Data de nascimento"
+    },
+    "sexo": {
+      "type": "string",
+      "enum": [
+        "Masculino",
+        "Feminino",
+        "Outro"
+      ],
+      "description": "Sexo"
+    },
+    "telefone": {
+      "type": "string",
+      "description": "Telefone"
+    },
+    "whatsapp": {
+      "type": "string",
+      "description": "WhatsApp"
+    },
+    "email": {
+      "type": "string",
+      "description": "E-mail"
+    },
+    "objetivo_principal": {
+      "type": "string",
+      "enum": [
+        "Emagrecimento",
+        "Hipertrofia",
+        "Sa\u00fade Geral",
+        "Gesta\u00e7\u00e3o",
+        "Vegetarianismo",
+        "Diabetes",
+        "Hipertens\u00e3o",
+        "Performance Esportiva",
+        "Outro"
+      ],
+      "description": "Objetivo principal"
+    },
+    "status": {
+      "type": "string",
+      "enum": [
+        "Ativo",
+        "Inativo",
+        "Arquivado"
+      ],
+      "default": "Ativo"
+    },
+    "observacoes": {
+      "type": "string",
+      "description": "Observa\u00e7\u00f5es gerais"
+    },
+    "notas_internas": {
+      "type": "string",
+      "description": "Anota\u00e7\u00f5es privadas do nutricionista"
+    },
+    "foto_url": {
+      "type": "string",
+      "description": "URL da foto do paciente"
+    },
+    "ultima_consulta": {
+      "type": "string",
+      "format": "date",
+      "description": "Data da \u00faltima consulta"
+    }
+  },
+  "required": [
+    "nome"
+  ]
+}

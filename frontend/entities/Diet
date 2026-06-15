@@ -1,0 +1,96 @@
+{
+  "name": "Diet",
+  "type": "object",
+  "properties": {
+    "organization_id": {
+      "type": "string",
+      "description": "ID da organiza\u00e7\u00e3o"
+    },
+    "patient_id": {
+      "type": "string"
+    },
+    "production_id": {
+      "type": "string"
+    },
+    "nome": {
+      "type": "string"
+    },
+    "objetivo": {
+      "type": "string"
+    },
+    "calorias_total": {
+      "type": "number"
+    },
+    "proteinas_total": {
+      "type": "number"
+    },
+    "carboidratos_total": {
+      "type": "number"
+    },
+    "lipidios_total": {
+      "type": "number"
+    },
+    "fibras_total": {
+      "type": "number"
+    },
+    "refeicoes": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "properties": {
+          "nome": {
+            "type": "string"
+          },
+          "horario": {
+            "type": "string"
+          },
+          "alimentos": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "nome": {
+                  "type": "string"
+                },
+                "quantidade": {
+                  "type": "number"
+                },
+                "medida": {
+                  "type": "string"
+                },
+                "calorias": {
+                  "type": "number"
+                },
+                "proteinas": {
+                  "type": "number"
+                },
+                "carboidratos": {
+                  "type": "number"
+                },
+                "lipidios": {
+                  "type": "number"
+                },
+                "substituicoes": {
+                  "type": "array",
+                  "items": {
+                    "type": "string"
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "observacoes": {
+      "type": "string"
+    },
+    "patient_nome": {
+      "type": "string"
+    }
+  },
+  "required": [
+    "patient_id",
+    "nome"
+  ]
+}

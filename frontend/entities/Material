@@ -1,0 +1,48 @@
+{
+  "name": "Material",
+  "type": "object",
+  "properties": {
+    "organization_id": {
+      "type": "string",
+      "description": "ID da organiza\u00e7\u00e3o"
+    },
+    "titulo": {
+      "type": "string"
+    },
+    "categoria": {
+      "type": "string",
+      "enum": [
+        "Receita",
+        "Guia",
+        "Protocolo",
+        "Material Educativo",
+        "PDF",
+        "Orienta\u00e7\u00e3o",
+        "Outro"
+      ]
+    },
+    "conteudo": {
+      "type": "string"
+    },
+    "tags": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      }
+    },
+    "favorito": {
+      "type": "boolean",
+      "default": false
+    },
+    "arquivo_url": {
+      "type": "string"
+    },
+    "descricao": {
+      "type": "string"
+    }
+  },
+  "required": [
+    "titulo",
+    "categoria"
+  ]
+}

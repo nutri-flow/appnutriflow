@@ -1,0 +1,12 @@
+services:
+  - type: web
+    name: nutriflow-backend
+    env: node
+    plan: free
+    buildCommand: npm install
+    startCommand: npm start
+    envVars:
+      - key: NODE_ENV
+        value: production
+      - key: DATABASE_URL
+        value: postgresql://nutriflow_db_wzmf_user:Hsq6n4OLQl3cZUcwPC5QrBG9U2Nze282@dpg-d8nnll1o3t8c73d097l0-a.virginia-postgres.render.com/nutriflow_db_wzmf

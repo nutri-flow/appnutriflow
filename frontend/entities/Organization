@@ -1,0 +1,21 @@
+{
+  "name": "Organization",
+  "type": "object",
+  "properties": {
+    "nome": {
+      "type": "string",
+      "description": "Nome da organiza\u00e7\u00e3o/cl\u00ednica"
+    },
+    "status": {
+      "type": "string",
+      "enum": [
+        "Ativa",
+        "Inativa"
+      ],
+      "default": "Ativa"
+    }
+  },
+  "required": [
+    "nome"
+  ]
+}
