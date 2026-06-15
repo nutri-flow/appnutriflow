@@ -8,13 +8,15 @@ import { Label } from "@/components/ui/label";
 import { UserPlus, Mail, Lock, Loader2 } from "lucide-react";
 import { InputOTP, InputOTPGroup, InputOTPSlot } from "@/components/ui/input-otp";
 import AuthLayout from "@/components/AuthLayout";
-import GoogleIcon from "@/components/GoogleIcon";
+import GoogleSignIn from "@/components/GoogleSignIn";
 import { toast } from "@/components/ui/use-toast";
 
 export default function Register() {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
+  const [name, setName] = useState("");
+  const [organizationName, setOrganizationName] = useState("");
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
   const [showOtp, setShowOtp] = useState(false);
@@ -29,8 +31,14 @@ export default function Register() {
     }
     setLoading(true);
     try {
-      await db.auth.register({ email, password });
-      setShowOtp(true);
+      await db.auth.register({ 
+        email, 
+        password, 
+        confirmPassword,
+        name,
+        organizationName 
+      });
+      window.location.href = "/";
     } catch (err) {
       setError(err.message || "Registration failed");
     } finally {
@@ -38,37 +46,19 @@ export default function Register() {
     }
   };
 
-  const handleVerify = async () => {
+  const handleGoogleSuccess = async (idToken) => {
     setError("");
     setLoading(true);
     try {
-      const result = await db.auth.verifyOtp({ email, otpCode });
-      if (result?.access_token) {
-        db.auth.setToken(result.access_token);
-      }
-      window.location.href = "/";
+      await db.auth.loginWithProvider("google", idToken, "/");
     } catch (err) {
-      setError(err.message || "Invalid verification code");
-    } finally {
+      setError(err.message || "Google registration failed");
       setLoading(false);
     }
   };
 
-  const handleResend = async () => {
-    setError("");
-    try {
-      await db.auth.resendOtp(email);
-      toast({
-        title: "Code sent",
-        description: "Check your email for the new code.",
-      });
-    } catch (err) {
-      setError(err.message || "Failed to resend code");
-    }
-  };
-
-  const handleGoogle = () => {
-    db.auth.loginWithProvider("google", "/");
+  const handleGoogleError = (errorMessage) => {
+    setError(errorMessage);
   };
 
   if (showOtp) {
@@ -139,14 +129,11 @@ export default function Register() {
         </>
       }
     >
-      <Button
-        variant="outline"
-        className="w-full h-12 text-sm font-medium mb-6"
-        onClick={handleGoogle}
-      >
-        <GoogleIcon className="w-5 h-5 mr-2" />
-        Continue with Google
-      </Button>
+      <GoogleSignIn 
+        onSuccess={handleGoogleSuccess}
+        onError={handleGoogleError}
+        isLoading={loading}
+      />
 
       <div className="relative mb-6">
         <div className="absolute inset-0 flex items-center">
@@ -164,6 +151,28 @@ export default function Register() {
       )}
 
       <form onSubmit={handleSubmit} className="space-y-4">
+        <div className="space-y-2">
+          <Label htmlFor="name">Full Name</Label>
+          <Input
+            id="name"
+            type="text"
+            placeholder="John Doe"
+            value={name}
+            onChange={(e) => setName(e.target.value)}
+            className="h-12"
+          />
+        </div>
+        <div className="space-y-2">
+          <Label htmlFor="organization">Organization Name</Label>
+          <Input
+            id="organization"
+            type="text"
+            placeholder="My Company"
+            value={organizationName}
+            onChange={(e) => setOrganizationName(e.target.value)}
+            className="h-12"
+          />
+        </div>
         <div className="space-y-2">
           <Label htmlFor="email">Email</Label>
           <div className="relative">

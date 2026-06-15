@@ -1,0 +1,7 @@
+{
+  "email": "admin@nutriflow.local",
+  "password": "senha123456",
+  "confirmPassword": "senha123456",
+  "organizationName": "Nutriflow Demo",
+  "name": "Admin User"
+}
