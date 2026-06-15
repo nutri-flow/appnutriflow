@@ -48,7 +48,9 @@ export default function GoogleSignIn({ onSuccess, onError, isLoading, className 
         }
 
         const width = Math.max(containerRef.current.getBoundingClientRect().width || 320, 280);
-        containerRef.current.innerHTML = '';
+        while (containerRef.current.firstChild) {
+          containerRef.current.removeChild(containerRef.current.firstChild);
+        }
         window.google.accounts.id.renderButton(containerRef.current, {
           theme: 'outline',
           size: 'large',
